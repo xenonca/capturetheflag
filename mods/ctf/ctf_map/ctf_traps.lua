@@ -102,7 +102,91 @@ minetest.register_node("ctf_map:reinforced_cobble", {
 	groups = {cracky = 1, stone = 2},
 	sounds = default.node_sound_stone_defaults(),
 })
+minetest.register_entity("ctf_map:check_player", {
+	initial_properties = {
+		is_visible = false,
+		physical = false,
+		makes_footstep_sound = false,
+		backface_culling = false,
+		static_save = true,
+		pointable = false,
+		collision_box = {0,0,0,0,0,0},
+	},
+	on_step = function(self)
+		--[[
+		local obj = self.object
+		local pos = object:get_pos()
+		local objs = minetest.get_objects_inside_radius(pos, radius)
+		local team = self._team
+		local radius = 2 
+		for _, obj in pairs(objs) do
+			local obj_pos = obj:get_pos()
+			local dist = math.max(1, vector.distance(pos, obj_pos))
+			local damage = (4 / dist) * radius
+			
+			if obj:is_player() then
+				local t = ctf_teams.get(player) or "red" -- hopefully if it fails it will default to red
+				if t ~= team then
+					obj:set_hp(obj:get_hp() - damage)
+				end 
+			end
+		end]]
+		local obj = self.object
+		local pos = obj:get_pos()
+		local plyrs = minetest.get_objects_inside_radius(pos, 1)
+		for _, v in pairs(plyrs) do
+			if v:is_player() and ctf_teams.get(v:get_player_name()) ~=  self._team then
+				-- needs a check to make sure the landmine is still there
+				minetest.add_particlespawner({
+					amount = 20,
+					time = 0.5,
+					minpos = vector.subtract(pos, 3),
+					maxpos = vector.add(pos, 3),
+					minvel = {x = 0, y = 5, z = 0},
+					maxvel = {x = 0, y = 7, z = 0},
+					minacc = {x = 0, y = 1, z = 0},
+					maxacc = {x = 0, y = 1, z = 0},
+					minexptime = 0.3,
+					maxexptime = 0.6,
+					minsize = 7,
+					maxsize = 10,
+					collisiondetection = true,
+					collision_removal = false,
+					vertical = false,
+					texture = "grenades_smoke.png",
+				})
 
+				minetest.add_particle({
+					pos = pos,
+					velocity = {x=0, y=0, z=0},
+					acceleration = {x=0, y=0, z=0},
+					expirationtime = 0.3,
+					size = 15,
+					collisiondetection = false,
+					collision_removal = false,
+					object_collision = false,
+					vertical = false,
+					texture = "grenades_boom.png",
+					glow = 10
+				})
+
+				minetest.sound_play("grenades_explode", {
+					pos = pos,
+					gain = 1.0,
+					max_hear_distance = 64,
+				})
+				if placerobj then
+					v:punch(placerobj, 1, {damage_groups = {fleshy = 15, landmine = 1}})
+				else
+					local chp = v:get_hp()
+					v:set_hp(chp - 15)
+					minetest.remove_node(pos)
+					obj:remove()
+				end
+			end
+		end
+	end
+})
 minetest.register_node("ctf_map:landmine", {
 	description = "Landmine",
 	drawtype = "nodebox",
@@ -121,13 +205,15 @@ minetest.register_node("ctf_map:landmine", {
 		fixed = {-0.5, -0.5, -0.5, 0.5, -0.4, 0.5},
 	},
 	after_place_node = function(pos, placer, itemstack, pointed_thing)
-		local meta = minetest.get_meta(pos)
-		local name = placer:get_player_name()
-
-		meta:set_string("placer", name)
+		--local meta = minetest.get_meta(pos)
+		--local name = placer:get_player_name()
+		local obj = minetest.add_entity(pos, "ctf_map:check_player")
+		local ent = obj:get_luaentity()
+		ent._team = ctf_teams.get(placer)
+		--meta:set_string("placer", name)
 	end
 })
-
+--[[
 minetest.register_abm({
 	label = "Landmine",
 	nodenames = {"ctf_map:landmine"},
@@ -204,4 +290,4 @@ minetest.register_abm({
 			minetest.remove_node(pos)
 		end
 	end
-})
+})]]
