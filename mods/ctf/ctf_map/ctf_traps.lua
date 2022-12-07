@@ -102,7 +102,36 @@ minetest.register_node("ctf_map:reinforced_cobble", {
 	groups = {cracky = 1, stone = 2},
 	sounds = default.node_sound_stone_defaults(),
 })
-
+minetest.register_entity("ctf_map:check_player", {
+	initial_properties = {
+		is_visible = false,
+		physical = false,
+		makes_footstep_sound = false,
+		backface_culling = false,
+		static_save = true,
+		pointable = false,
+		collision_box = {0,0,0,0,0,0},
+	},
+	on_step = function(self)
+		local obj = self.object
+		local pos = object:get_pos()
+		local objs = minetest.get_objects_inside_radius(pos, radius)
+		local team = self._team
+		local radius = 2 
+		for _, obj in pairs(objs) do
+			local obj_pos = obj:get_pos()
+			local dist = math.max(1, vector.distance(pos, obj_pos))
+			local damage = (4 / dist) * radius
+			
+			if obj:is_player() then
+				local t = ctf_teams.get(player) or "red" -- hopefully if it fails it will default to red
+				if t ~= team then
+					obj:set_hp(obj:get_hp() - damage)
+				end 
+			end
+		end
+	end,
+})
 minetest.register_node("ctf_map:landmine", {
 	description = "Landmine",
 	drawtype = "nodebox",
@@ -121,13 +150,15 @@ minetest.register_node("ctf_map:landmine", {
 		fixed = {-0.5, -0.5, -0.5, 0.5, -0.4, 0.5},
 	},
 	after_place_node = function(pos, placer, itemstack, pointed_thing)
-		local meta = minetest.get_meta(pos)
-		local name = placer:get_player_name()
-
-		meta:set_string("placer", name)
+		--local meta = minetest.get_meta(pos)
+		--local name = placer:get_player_name()
+		local obj = minetest.add_entity(pos, "ctf_map:check_player")
+		local ent = obj:get_luaentity()
+		ent._team = ctf_teams.get(placer)
+		--meta:set_string("placer", name)
 	end
 })
-
+--[[
 minetest.register_abm({
 	label = "Landmine",
 	nodenames = {"ctf_map:landmine"},
@@ -204,4 +235,4 @@ minetest.register_abm({
 			minetest.remove_node(pos)
 		end
 	end
-})
+})]]
