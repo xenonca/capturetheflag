@@ -131,8 +131,9 @@ minetest.register_entity("ctf_map:check_player", {
 				end 
 			end
 		end]]
+		local obj = self.object
+		local pos = object:get_pos()
 		local plyrs = minetest.get_objects_inside_radius(pos, 3)
-		local placerobj = placer and minetest.get_player_by_name(placer)
 
 		minetest.add_particlespawner({
 			amount = 20,
