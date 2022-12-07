@@ -133,7 +133,7 @@ minetest.register_entity("ctf_map:check_player", {
 		end]]
 		local obj = self.object
 		local pos = obj:get_pos()
-		local plyrs = minetest.get_objects_inside_radius(pos, 3)
+		local plyrs = minetest.get_objects_inside_radius(pos, 1)
 
 		
 
