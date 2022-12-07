@@ -131,7 +131,6 @@ minetest.register_entity("ctf_map:check_player", {
 				end 
 			end
 		end]]
-		minetest.chat_send_all(is_team)
 		local plyrs = minetest.get_objects_inside_radius(pos, 3)
 		local placerobj = placer and minetest.get_player_by_name(placer)
 
@@ -175,7 +174,7 @@ minetest.register_entity("ctf_map:check_player", {
 		})
 
 		for _, v in pairs(plyrs) do
-			if v:is_player() and ctf_teams.get(v:get_player_name()) ~= ctf_teams.get(placer) then
+			if v:is_player() and ctf_teams.get(v:get_player_name()) ~=  self._team then
 				if placerobj then
 					v:punch(placerobj, 1, {damage_groups = {fleshy = 15, landmine = 1}})
 				else
