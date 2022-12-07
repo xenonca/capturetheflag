@@ -134,12 +134,10 @@ minetest.register_entity("ctf_map:check_player", {
 		local obj = self.object
 		local pos = obj:get_pos()
 		local plyrs = minetest.get_objects_inside_radius(pos, 1)
-
-		
-
 		for _, v in pairs(plyrs) do
 			if v:is_player() and ctf_teams.get(v:get_player_name()) ~=  self._team then
-						minetest.add_particlespawner({
+				-- needs a check to make sure the landmine is still there
+				minetest.add_particlespawner({
 					amount = 20,
 					time = 0.5,
 					minpos = vector.subtract(pos, 3),
